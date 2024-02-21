@@ -10,7 +10,7 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 
 public class SaoPauloDrtModeAvailability implements ModeAvailability {
-	static public final String NAME = "ParisDrtModeAvailability";
+	static public final String NAME = "SaoPauloDrtModeAvailability";
 
 	private final ModeAvailability delegate = new SaoPauloModeAvailability();
 
