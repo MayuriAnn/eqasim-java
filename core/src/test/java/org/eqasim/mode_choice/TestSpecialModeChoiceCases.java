@@ -14,11 +14,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.config.GenerateConfig;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.junit.Test;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -45,7 +47,7 @@ import org.matsim.core.router.RoutingModule;
 import org.matsim.core.router.RoutingRequest;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.timing.TimeInterpretationModule;
-import org.matsim.utils.objectattributes.attributable.Attributes;
+import org.matsim.utils.objectattributes.attributable.AttributesImpl;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -144,6 +146,7 @@ public class TestSpecialModeChoiceCases {
 		CommandLine cmd = new CommandLine.Builder(new String[] {}).build();
 
 		new GenerateConfig(cmd, "", 1.0, 1, 1).run(config);
+		config.addModule(new EqasimRaptorConfigGroup());
 
 		// Make sure the two relevant options (walk vs. bike) both get zero utility
 		DiscreteModeChoiceConfigGroup.getOrCreate(config).setModeAvailability("static");
@@ -152,6 +155,7 @@ public class TestSpecialModeChoiceCases {
 
 		// Now create the model
 		EqasimConfigurator configurator = new EqasimConfigurator();
+		configurator.getModules().removeIf(m -> m instanceof EqasimTerminationModule);
 		
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		
@@ -200,7 +204,7 @@ public class TestSpecialModeChoiceCases {
 		destinationActivity.setMaximumDuration(3600.0);
 
 		DiscreteModeChoiceTrip trip = new DiscreteModeChoiceTrip(originActivity, destinationActivity, "walk",
-				Collections.emptyList(), 0, trips.size(), trips.size(), new Attributes());
+				Collections.emptyList(), 0, trips.size(), trips.size(), new AttributesImpl());
 		trips.add(trip);
 	}
 

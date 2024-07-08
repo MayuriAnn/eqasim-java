@@ -1,5 +1,15 @@
 package org.eqasim.core.simulation.modes.drt.utils;
 
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -17,15 +27,9 @@ import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoic
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.utils.misc.Time;
-
-import java.nio.file.Path;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class AdaptConfigForDrt {
 
@@ -57,40 +61,40 @@ public class AdaptConfigForDrt {
 
         for(String drtMode: vehiclesPathByDrtMode.keySet()) {
             DrtConfigGroup drtConfigGroup = new DrtConfigGroup();
-            drtConfigGroup.setMode(drtMode);
-            drtConfigGroup.setOperationalScheme(DrtConfigGroup.OperationalScheme.valueOf(operationalSchemes.get(drtMode)));
-            drtConfigGroup.setStopDuration(15.0);
-            drtConfigGroup.setMaxWaitTime(600);
-            drtConfigGroup.setMaxTravelTimeAlpha(1.5);
-            drtConfigGroup.setMaxTravelTimeBeta(300.0);
-            drtConfigGroup.setVehiclesFile(vehiclesPathByDrtMode.get(drtMode));
+            drtConfigGroup.mode = drtMode;
+            drtConfigGroup.operationalScheme = DrtConfigGroup.OperationalScheme.valueOf(operationalSchemes.get(drtMode));
+            drtConfigGroup.stopDuration = 15.0;
+            drtConfigGroup.maxWaitTime = 600;
+            drtConfigGroup.maxTravelTimeAlpha = 1.5;
+            drtConfigGroup.maxTravelTimeBeta = 300.0;
+            drtConfigGroup.vehiclesFile  = vehiclesPathByDrtMode.get(drtMode);
 
             DrtInsertionSearchParams searchParams = new ExtensiveInsertionSearchParams();
             drtConfigGroup.addDrtInsertionSearchParams(searchParams);
 
             RebalancingParams rebalancingParams = new RebalancingParams();
-            rebalancingParams.setInterval(1800);
+            rebalancingParams.interval  =1800;
             rebalancingParams.addParameterSet(new PlusOneRebalancingStrategyParams());
             drtConfigGroup.addParameterSet(rebalancingParams);
 
             DrtZonalSystemParams drtZonalSystemParams = new DrtZonalSystemParams();
-            drtZonalSystemParams.setZonesGeneration(DrtZonalSystemParams.ZoneGeneration.GridFromNetwork);
-            drtZonalSystemParams.setCellSize(500.0);
-            drtZonalSystemParams.setTargetLinkSelection(DrtZonalSystemParams.TargetLinkSelection.mostCentral);
+            drtZonalSystemParams.zonesGeneration  = DrtZonalSystemParams.ZoneGeneration.GridFromNetwork;
+            drtZonalSystemParams.cellSize = 500.0;
+            drtZonalSystemParams.targetLinkSelection = DrtZonalSystemParams.TargetLinkSelection.mostCentral;
             drtConfigGroup.addParameterSet(drtZonalSystemParams);
 
-            multiModeDrtConfigGroup.addDrtConfig(drtConfigGroup);
+            multiModeDrtConfigGroup.addParameterSet(drtConfigGroup);
 
             // Set up choice model
             EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
             eqasimConfig.setCostModel(drtMode, drtCostModels.get(drtMode));
             eqasimConfig.setEstimator(drtMode, drtUtilityEstimators.get(drtMode));
 
-            PlanCalcScoreConfigGroup.ModeParams modeParams = new PlanCalcScoreConfigGroup.ModeParams(drtMode);
-            config.planCalcScore().addModeParams(modeParams);
+            ScoringConfigGroup.ModeParams modeParams = new ScoringConfigGroup.ModeParams(drtMode);
+            config.scoring().addModeParams(modeParams);
         }
 
-        DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
+        DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfigGroup, config.scoring(), config.routing());
 
         // Additional requirements
         config.qsim().setStartTime(0.0);
@@ -100,7 +104,7 @@ public class AdaptConfigForDrt {
 
     }
 
-    private static Map<String, Map<String, String>> extractDrtInfo(String[] drtModeNames, Map<String, String[]> values) {
+    public static Map<String, Map<String, String>> extractDrtInfo(String[] drtModeNames, Map<String, String[]> values) {
         Map<String, Map<String, String>> result = new HashMap<>();
         if(drtModeNames.length == 0) {
             throw new IllegalStateException("No drt modes provided");
@@ -137,7 +141,7 @@ public class AdaptConfigForDrt {
 
         String inputConfigPath = cmd.getOptionStrict("input-config-path");
         String outputConfigPath = cmd.getOptionStrict("output-config-path");
-        String[] modeNames = Arrays.stream(cmd.getOption("mode-names").orElse("drt").split(",")).collect(Collectors.toSet()).toArray(String[]::new);
+        String[] modeNames = Arrays.stream(cmd.getOption("mode-names").orElse("drt").split(",")).toList().toArray(String[]::new);
         String[] vehiclesPath = cmd.getOptionStrict("vehicles-paths").split(",");
         String qsimEndtime = cmd.getOption("qsim-endtime").orElse("30:00:00");
         String[] costModel = cmd.getOption("cost-models").orElse(EqasimModeChoiceModule.ZERO_COST_MODEL_NAME).split(",");

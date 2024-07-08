@@ -6,6 +6,15 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Emissions tools have been moved to core package (from ile_de_france)
+- Switched to MATSim 2025 (PR)
+
+**1.5.0**
+
+- Add terminaton criterion
+- Several cleanups in the recent commits
+- Updated to MATSim 15
+- Improve emissions tools and add tests
 - Add support for multi-stage taxi trips in Sao Paulo
 - fix: make compatible with downstream population pipelines
 - Ensure outside activity id doesn't already exist
