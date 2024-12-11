@@ -8,14 +8,16 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.groups.QSimConfigGroup;
+import org.matsim.core.config.groups.QSimConfigGroup.VehiclesSource;
+import org.matsim.core.config.groups.VehiclesConfigGroup;
 
 public class RunAdaptConfig {
 	static public void main(String[] args) throws ConfigurationException {
-		IDFConfigurator configurator = new IDFConfigurator();
-		ConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
+		ConfigAdapter.run(args, new IDFConfigurator(), RunAdaptConfig::adaptConfiguration);
 	}
 
-	static public void adaptConfiguration(Config config) {
+	static public void adaptConfiguration(Config config, String prefix) {
 		// Adjust eqasim config
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 
@@ -37,5 +39,12 @@ public class RunAdaptConfig {
 			config.qsim().setFlowCapFactor(0.045);
 			config.qsim().setStorageCapFactor(0.045);
 		}
+
+		// Vehicles
+		QSimConfigGroup qsimConfig = config.qsim();
+		qsimConfig.setVehiclesSource(VehiclesSource.fromVehiclesData);
+
+		VehiclesConfigGroup vehiclesConfig = config.vehicles();
+		vehiclesConfig.setVehiclesFile(prefix + "vehicles.xml.gz");
 	}
 }

@@ -3,7 +3,12 @@ package org.eqasim.core.standalone_mode_choice;
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAbstractAccessModuleConfigGroup;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAccessModule;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeChoiceModule;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
+import org.eqasim.core.simulation.vdf.VDFModule;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
@@ -27,6 +32,10 @@ public class StandaloneModeChoiceConfigurator {
         this.config = config;
         this.commandLine = commandLine;
         this.optionalModules = new LinkedHashMap<>();
+
+        this.registerOptionalModule(new VDFConfigGroup(), new VDFModule());
+        this.registerOptionalModule(TransitWithAbstractAbstractAccessModuleConfigGroup.GROUP_NAME, new TransitWithAbstractAccessModeChoiceModule());
+        this.registerOptionalModule(TransitWithAbstractAbstractAccessModuleConfigGroup.GROUP_NAME, new TransitWithAbstractAccessModule());
     }
 
     public Config getConfig() {
@@ -47,7 +56,7 @@ public class StandaloneModeChoiceConfigurator {
 
     public final List<AbstractModule> getModeChoiceModules(Config config) {
         List<AbstractModule> modules = new ArrayList<>();
-        new EqasimConfigurator().getModules().stream().filter(module -> !(module instanceof EqasimTerminationModule)).forEach(modules::add);
+        new EqasimConfigurator().getModules(config).stream().filter(module -> !(module instanceof EqasimTerminationModule)).forEach(modules::add);
         modules.add(new TimeInterpretationModule());
         modules.add(new StandaloneModeChoiceModule(getConfig()));
         // We add a module that just binds the PersonAnalysisFilter without having to add the whole EqasimAnalysisModule

@@ -4,17 +4,12 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
-import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
+import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
-import org.eqasim.vdf.VDFConfigGroup;
-import org.eqasim.vdf.VDFModule;
-import org.eqasim.vdf.VDFQSimModule;
-import org.eqasim.vdf.engine.VDFEngineConfigGroup;
-import org.eqasim.vdf.engine.VDFEngineModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -36,10 +31,10 @@ public class RunCorsicaVDFEngineSimulation {
 				.build();
 
 		IDFConfigurator configurator = new IDFConfigurator();
-		configurator.getQSimModules().removeIf(m -> m instanceof EqasimTrafficQSimModule);
 
 		URL configUrl = Resources.getResource("corsica/corsica_config.xml");
-		Config config = ConfigUtils.loadConfig(configUrl, configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(configUrl);
+		configurator.updateConfig(config);
 
 		config.controller().setLastIteration(2);
 
@@ -77,19 +72,6 @@ public class RunCorsicaVDFEngineSimulation {
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
-
-		// VDF: Add modules
-		controller.addOverridingModule(new VDFModule());
-		controller.addOverridingQSimModule(new VDFQSimModule());
-
-		// VDF Engine: Add modules
-		controller.addOverridingModule(new VDFEngineModule());
-
-		// VDF Engine: Active engine
-		controller.configureQSimComponents(cfg -> {
-			EqasimTransitQSimModule.configure(cfg, controller.getConfig());
-			cfg.addNamedComponent(VDFEngineModule.COMPONENT_NAME); // here
-		});
 
 		controller.run();
 	}
