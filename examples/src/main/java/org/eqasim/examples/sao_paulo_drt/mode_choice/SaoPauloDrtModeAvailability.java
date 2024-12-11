@@ -19,7 +19,8 @@ public class SaoPauloDrtModeAvailability implements ModeAvailability {
 		Collection<String> modes = delegate.getAvailableModes(person, trips);
 
 		if (modes.contains(TransportMode.walk)) {
-			modes.add("drt");
+			modes.add("feeder");
+			//modes.add("drt_for_feeder_a");
 		}
 
 		return modes;

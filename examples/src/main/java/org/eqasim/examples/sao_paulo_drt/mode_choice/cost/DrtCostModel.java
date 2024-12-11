@@ -18,7 +18,7 @@ public class DrtCostModel extends AbstractCostModel {
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		double tripDistance_km = getInVehicleDistance_km(elements);
-		return parameters.drtCost_BRL_km * tripDistance_km;
+		//double tripDistance_km = getInVehicleDistance_km(elements);
+		return parameters.drtCost_BRL; //* tripDistance_km;
 	}
 }

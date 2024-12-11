@@ -36,8 +36,8 @@ public class SaoPauloDrtModule extends AbstractEqasimExtension {
 		bindModeAvailability(SaoPauloDrtModeAvailability.NAME).to(SaoPauloDrtModeAvailability.class);
 
 		// Configure choice alternative for DRT
-		bindUtilityEstimator("drt").to(DrtUtilityEstimator.class);
-		bindCostModel("drt").to(DrtCostModel.class);
+		bindUtilityEstimator("spdrt").to(DrtUtilityEstimator.class);
+		bindCostModel("spdrt").to(DrtCostModel.class);
 		bind(DrtPredictor.class).to(DefaultDrtPredictor.class);
 
 		// Define filter for trip analysis

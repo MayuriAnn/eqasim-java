@@ -1,16 +1,26 @@
 package org.eqasim.sao_paulo;
 
 import java.util.Random;
+import java.util.Arrays;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
+import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.FeederDrtModeAvailabilityWrapper;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeAvailabilityWrapper;
+import org.eqasim.sao_paulo.mode_choice.SaoPauloFeederEDrtModeAvailability;
+import org.eqasim.sao_paulo.mode_choice.SaoPauloFeederOnlyModeAvailability;
+import org.eqasim.sao_paulo.mode_choice.SaoPauloModeAvailability;
 import org.eqasim.sao_paulo.mode_choice.SaoPauloModeChoiceModule;
+import org.eqasim.sao_paulo.rejections.RejectionModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
+import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -19,6 +29,9 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.router.TripStructureUtils.Trip;
 import org.matsim.core.scenario.ScenarioUtils;
+
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
@@ -70,7 +83,48 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new SaoPauloModeChoiceModule(cmd));
+		controller.addOverridingModule(new RejectionModule(Arrays.asList("drt")));
 		controller.addOverridingModule(new EqasimAnalysisModule());
+		
+		if (args[1].equals("feeder")){
+			controller.addOverridingModule(new SaoPauloDrtModule(cmd));
+			controller.addOverridingModule(new AbstractEqasimExtension() {
+				@Override
+				protected void installEqasimExtension() {
+					
+					bindModeAvailability("SaoPauloFeederOnlyModeAvailability").toProvider(new Provider<>() {
+						@Inject
+						private Config config;
+
+						@Override
+						public ModeAvailability get() {
+							FeederDrtModeAvailabilityWrapper feederDrtModeAvailabilityWrapper = new FeederDrtModeAvailabilityWrapper(config, new SaoPauloFeederOnlyModeAvailability());
+							return new TransitWithAbstractAccessModeAvailabilityWrapper(config, feederDrtModeAvailabilityWrapper);
+						}
+					}).asEagerSingleton();
+				}
+			});
+		}
+		if (args[1].equals("feederdrt")){
+			controller.addOverridingModule(new SaoPauloDrtModule(cmd));
+			controller.addOverridingModule(new AbstractEqasimExtension() {
+				@Override
+				protected void installEqasimExtension() {
+					
+					bindModeAvailability("SaoPauloFeederEDRTModeAvailability").toProvider(new Provider<>() {
+						@Inject
+						private Config config;
+
+						@Override
+						public ModeAvailability get() {
+							FeederDrtModeAvailabilityWrapper feederDrtModeAvailabilityWrapper = new FeederDrtModeAvailabilityWrapper(config, new SaoPauloFeederEDrtModeAvailability());
+							return new TransitWithAbstractAccessModeAvailabilityWrapper(config, feederDrtModeAvailabilityWrapper);
+						}
+					}).asEagerSingleton();
+				}
+			});
+		}
+		
 		controller.run();
 	}
 }
